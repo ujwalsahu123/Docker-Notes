@@ -1,5 +1,6 @@
 # Docker-Notes
 <hr>
+
 # Docker Introduction
 
 Docker is a containerization tool used to package an application along with all its dependencies so that it runs the same on any machine.
