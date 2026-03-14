@@ -1,8 +1,3 @@
-
-<p align="center">
-  <img src="notes/docker_architecture.png" width="600">
-</p>
-
 ## Table of Contents
 
 1. [Docker Introduction](#docker-introduction)
@@ -25,8 +20,11 @@
 18. [Flow of Dockerizing a Project](#summary--flow-of-dockerising-a-project)
 19. [Docker Explanation for Interview](#docker-explanation-for-interview)
 
+<p align="center"><img src="Notes/docker_architecture.png" width="600"></p>
+
 <br>
 <hr>
+
 # Docker Introduction
 
 Docker is a containerization tool used to package an application along with all its dependencies so that it runs the same on any machine.
