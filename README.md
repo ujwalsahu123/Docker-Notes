@@ -129,7 +129,7 @@ Dockerfile (instructions to build environment)
 Docker Image (packaged application environment)
      ↓
 Docker Container (running application)
-
+<br>
 <hr>
 
 # React Project with Docker
