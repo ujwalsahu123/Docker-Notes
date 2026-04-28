@@ -292,7 +292,7 @@ Expose tells Docker which port the application inside container will use.
 
 Note:  
 since containers are isolated. so the port is not accessible outside automatically.  
-so we do port mapping -> -p host_port:container_port -> **`docker run -p 3000:3000 myimage`**  
+so we do port mapping -> **`-p host_port : container_port`** -> **`docker run -p 3000:3000 myimage`**  
 also for specific applications like flask, fastapi, streamlit, etc we have to set the host="0.0.0.0" , instead of localhost or etc.  
 
 #### 7) Command
