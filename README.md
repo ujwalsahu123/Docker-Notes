@@ -306,7 +306,7 @@ Examples:
 **`CMD ["uvicorn","main:app","--host","0.0.0.0","--port","8000"]`**  
 
 Important:  
-CMD can be overridden using docker run [COMMAND].
+These Dockerfile CMD can be overridden using `docker run [COMMAND]`
 
 #### Example Node project: 
 
