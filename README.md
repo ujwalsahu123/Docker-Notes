@@ -303,6 +303,7 @@ Examples:
 **`CMD ["npm","start"]`**  
 **`CMD ["python","app.py"]`**  
 **`CMD ["node","server.js"]`**  
+For FastAPI / StreamLit Applications :-  
 **`CMD ["uvicorn","main:app","--host","0.0.0.0","--port","8000"]`**  
 
 Important:  
