@@ -18,7 +18,8 @@
 16. [Docker Compose](#docker-compose)
 17. [Container Scaling](#container-scaling)
 18. [Flow of Dockerizing a Project](#summary--flow-of-dockerising-a-project)
-19. [Docker Explanation for Interview](#docker-explanation-for-interview)
+19. [Dockerize & Deploy FastAPI App](#dockerize-and-deploy-fastapi-app)
+20. [Docker Explanation for Interview](#docker-explanation-for-interview)
 
 <p align="center"><img src="Notes/docker_architecture.png" width="600"></p>
 
@@ -1719,6 +1720,353 @@ Example:
 
 <br>
 <hr>
+
+
+
+# Dockerize and Deploy FastAPI App
+
+---
+
+
+## Make Required Files before Deployment
+
+- requirements.txt
+
+can do `pip freeze > requirements.txt` but manually writing is better since pip freeze can Include unnecessary packages.
+
+- .gitignore
+
+```
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+venv/
+.env/
+.venv/
+
+# Environment variables / secrets
+.env
+*.env
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Build / dist
+build/
+dist/
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Docker
+*.tar
+
+etc ...
+```
+
+- .dockerignore 
+
+```
+.git
+.gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+venv/
+.venv
+
+.env/
+.env
+*.env
+
+node_modules/
+
+*.log
+dist/
+build/
+
+etc ...
+
+```
+
+Dont ignore Dockerfile, .dockerignore in the .dockerignore file since these are required for building the docker image.
+
+
+- pyproject.toml (optional)
+
+```
+structured config hub for Python projects.
+
+[project]
+name = "my_app"
+version = "0.1.0"
+dependencies = ["fastapi", "uvicorn"]
+
+[tool.black]
+line-length = 88
+```
+
+- docker-compose.yaml (optional)
+
+```
+For running multiple containers together such as FastAPI container + Database Container + Redis Container + etc ... thus making it easy to manage and run the entire application with all its dependencies using a single command.
+
+version: "3"
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+
+RUN:
+docker compose up
+docker compose down
+
+```
+
+
+- .env.example
+
+mention all the environment variables & API keys that are required to run the application 
+
+No values, just structure.
+
+```
+DATABASE_URL=
+SECRET_KEY=
+DEBUG=
+```
+
+
+- Xtra
+For Deployment also we dont need to have a def main() function since we can use the same cmd -> uvicorn main:app --host=0.0.0.0 --port=8000 for running the appliction in the Dockerfile CMD, or Explicitly mention this RUN CMD - if deploying on Render.  
+But if you want then you can keep the Main function also like this below, and no need update anything else & can keep the same Dockerfile CMD & Render Run CMD as -> uvicorn main:app --host=0.0.0.0 --port=8000. 
+
+```
+# Using Logger for better logging and debugging instead of print statements
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Use:-
+logger.info("msg print")
+logger.error("error msg print")
+
+# main function code
+if __name__ == "__main__":
+    import uvicorn
+    
+    logger.info("Starting Application...")
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        log_level="info"
+    )
+```
+
+
+## Dockerize Steps
+
+
+0) Install Docker & Create account on Docker Hub
+
+
+1) Create a Dockerfile (In this file we write the commands to start the application, such as install dependencies, terminal cmds to run the app, etc ...)
+
+```
+# Use Python 3.11 base image
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy rest of application code
+COPY . .
+
+# Expose the application port
+EXPOSE 8000
+
+# Command to start FastAPI application
+# mention the Main file name main:app or app:app , etc 
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+2) Build the docker image `docker build -t image_name:tag .` 
+
+keep image name as username/image_name:tag so that when pushing to docker hub it should be in the format of username/image_name:tag where username is the username of your docker hub account.
+
+3) Login to Docker Hub `docker login`
+
+it will ask the dockerhub username and password.
+
+4) Push the image to Docker Hub `docker push username/image_name:tag`
+
+5) Pull the image on the server `docker pull username/image_name:tag`
+
+
+6) Run the Docker image Container `docker run -d -p 8000:8000 username/image_name:tag`
+
+
+Before Pulling & Running on the server, you can also Test Yours or Someone Else's Docker image on you Machine using the Docker Destop Appliction > Docker Terminal > `docker pull username/image_name:tag` > Run the Docker Image Container `docker run -d -p 8000:8000 username/image_name:tag` > the application will start running > see the logs > test the API using Postman or Browser > see the output and check if its working fine or not.
+
+
+
+## Deployment on Render
+
+For Deployment on Render/etc platforms we Can simply Push the code on Github Repo and Connect it with Render - & Either deploy using the Code on github repo or Send the Docker Image Directly On Render. and then in Render Dashboard we can set all the Environment Variables, API keys, Run CMD, etc ...
+
+
+
+## Deployment on AWS EC2
+
+0) Create Account on AWS
+
+1) Create an EC2 instance 
+
+- Open EC2 Dashboard
+- Click Instance (Left side)
+- Launch Instance
+- Set Name of server, Select OS (linux), Set Hardware (t2 micro), Set/Create Key:Pair (So that we can access the EC2 server remotely), Check - Allow SSH trafic from Anywhere, Config Storage (8GB), Launch Instance
+
+2) Connect to the EC2 instance
+
+- Open EC2 Dashboard > That EC2 Instance > Connect
+
+3) Run the Following Commands
+
+```
+sudo apt-get update
+
+sudo apt-get install -y docker.io
+
+sudo systemctl start docker   
+
+# so that even if the EC2 machine is down and restarts then we dont have to manually start the docker again, and it Automatically starts.
+
+sudo systemctl enable docker
+
+sudo usermod -aG docker $USER
+
+# so that we can pull Docker image from the internet.
+
+exit
+```
+Then close the terminal
+
+4) Restart a new connection to EC2 instance
+
+- EC2 Dashboard > that EC2 instance > Connect
+
+5) Pull & Run the Docker Image Container
+
+```
+docker pull username/imagename:tag
+
+docker run -d -p 8000:8000 username/imagename:tag
+
+# now the FastAPI app is running on that machine.
+```
+
+6) Change security group settings
+
+- EC2 Dashboard > that EC2 instance > Security > Click Security Groups link > Edit inbound rules > Add rule > Type = Custom TCP, Port = 8000, Source = Anywhere 0.0.0.0/0 > Save Rules
+
+
+7) Check the API
+
+To access it :
+
+- EC2 Instance > Click EC2_id > Copy Public IP address of that instance > http://ip_address/docs (use http not https since for https we need to get SSH certificate)  
+Later in Production → use Nginx for Reverse Proxy + HTTPS (SSL)
+
+8) Update the Frontend
+
+- `API_URL = "http://ip_address:8000/path"`
+
+you can use this URL directly in the Frontend Code, but Mostly people want to hide their Backend API's, so you can put this API_URL in frontend > .env file , and then acces the URL using environment variables, and while deploying the frontend ignore the .env file in .gitignore and manually set the environement variables in the Deployment platforms (Vercel, Render, etc)
+
+
+
+### Environment Variables (.env) setup 
+
+we dont push the .env in github nor in the docker image since it can contain our secret keys. (thus mention .env in .gitignore, and also in .dockerignore)  
+
+To access the environment variables in Render / AWS / etc platfomrs we can simply Put the environment variables in the Setup and Settings.
+
+To access the environment variables after pulling a docker image (which dosent has .env file) and Running the Container we have several ways:-
+
+Idea:-  
+Docker image = static  
+Environment variables = injected at runtime
+
+1) Pass env variables at runtime (most common) 
+
+`docker run -d -p 8000:8000 -e DATABASE_URL=postgres://... -e SECRET_KEY=abc username/image:tag`
+
+2) Use a .env file at runtime (but NOT inside image) (basically making a .env file on the server and then passing it to the container at runtime)
+
+```
+# Create .env file on Server:
+
+nano .env
+
+# Add your variables:
+
+DATABASE_URL=postgres://...
+SECRET_KEY=abc123
+DEBUG=False
+
+# Save:
+
+Ctrl + X
+Y
+Enter
+```
+
+Then Run the Container & Use that .env file variables
+
+`docker run -d -p 8000:8000 --env-file .env username/image:tag`
+
+✔ .env stays on the server
+❌ Not copied into the image
+
+or you can simply put this part in the docker-compose.yaml file so that when you run `docker compose up` it automatically takes the .env file and pass the env variables to the container.
+
+```
+services:
+  app:
+    build: .
+    env_file:
+      - .env
+```
+
+
+To learn more checkout the Docker Repo: https://github.com/ujwalsahu123/Docker-Notes 
+
+<br>
+<hr>
+
 
 # Docker Explanation for Interview
 
